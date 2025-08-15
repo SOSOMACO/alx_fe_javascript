@@ -3,6 +3,16 @@ let quotes = [
   { text: "Life is what happens when you're busy making other plans.", category: "Life" },
   { text: "Be yourself; everyone else is already taken.", category: "Motivation" }
 ];
+function saveQuotes() {
+    localStorage.setItem('quotes', JSON.stringify(quotes));
+}
+
+function loadQuotes() {
+    const storedQuotes = localStorage.getItem('quotes');
+    if (storedQuotes) {
+        quotes = JSON.parse(storedQuotes);
+    }
+}
 
 // Display elements
 const quoteDisplay = document.getElementById('quoteDisplay');
@@ -31,6 +41,17 @@ function addQuote() {
     alert('Please enter both quote and category');
   }
 }
+document.getElementById('exportBtn').addEventListener('click', function() {
+    const dataStr = JSON.stringify(quotes, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'quotes.json';
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
 function createAddQuoteForm() {
   const formContainer = document.createElement('div');
 

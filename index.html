@@ -1,46 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quotes Manager</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        form {
-            margin-bottom: 15px;
-        }
-        #quotesContainer p {
-            cursor: pointer;
-            padding: 5px;
-            background: #f1f1f1;
-            border-radius: 5px;
-            margin: 5px 0;
-        }
-        #quotesContainer p:hover {
-            background: #ddd;
-        }
-        #lastViewedQuote {
-            margin-top: 10px;
-            font-weight: bold;
-            color: #555;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dynamic Quote Generator</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;line-height:1.4}
+    h1{margin-bottom:8px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .card{background:#fafafa;border:1px solid #eee;border-radius:12px;padding:16px;margin:12px 0}
+    #quoteDisplay{font-size:1.15rem;font-weight:600;margin:8px 0}
+    ul{padding-left:18px}
+    li{margin:4px 0}
+    button{cursor:pointer;border-radius:8px;border:1px solid #ddd;padding:8px 12px;background:#fff}
+    button:hover{background:#f3f3f3}
+    input,select{border:1px solid #ddd;border-radius:8px;padding:8px 10px}
+    .hint{color:#777;font-size:.9rem}
+  </style>
 </head>
 <body>
 
-    <h1>Quotes Manager</h1>
+  <h1>Dynamic Quote Generator</h1>
 
-    <div>
-        <button onclick="exportToJsonFile()">Export Quotes</button>
-        <input type="file" accept="application/json" onchange="importFromJsonFile(event)">
+  <!-- مطابق لخطوة ستب 1: عناصر أساسية -->
+  <div id="quoteDisplay" class="card"></div>
+  <div class="row">
+    <button id="newQuote">Show New Quote</button>
+    <button id="syncNow">Sync Now</button>
+  </div>
+
+  <!-- فلترة بالتصنيف (Step 2 في تاسك 2) -->
+  <div class="card">
+    <div class="row">
+      <label for="categoryFilter"><strong>Filter by Category:</strong></label>
+      <select id="categoryFilter" onchange="filterQuotes()">
+        <option value="all">All Categories</option>
+        <!-- تُملأ ديناميكياً -->
+      </select>
     </div>
+    <div class="hint">نحفظ آخر فلتر اخترته في Local Storage ونرجّعه تلقائيًا.</div>
+  </div>
 
-    <div id="quotesContainer"></div>
-    <p id="lastViewedQuote"></p>
+  <!-- إضافة اقتباس جديد (Step 3 في تاسك 0) -->
+  <div class="card" id="addQuoteCard">
+    <div class="row">
+      <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+      <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+      <button onclick="addQuote()">Add Quote</button>
+    </div>
+    <div class="hint">نضيف التصنيف تلقائيًا لو جديد، ونحدّث القايمة والفلتر.</div>
+  </div>
 
-    <script src="script.js"></script>
+  <!-- قائمة الاقتباسات المعروضة -->
+  <div class="card">
+    <strong>Quotes</strong>
+    <ul id="quotesList"></ul>
+    <div id="lastViewedQuote" class="hint"></div>
+  </div>
+
+  <!-- استيراد/تصدير JSON (تاسك 1) -->
+  <div class="card">
+    <div class="row">
+      <button onclick="exportToJsonFile()">Export Quotes (JSON)</button>
+      <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)"/>
+    </div>
+    <div class="hint">نستخدم Blob + URL.createObjectURL للتصدير. الاستيراد يدمج ويحفظ في Local Storage.</div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>

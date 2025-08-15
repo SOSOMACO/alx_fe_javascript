@@ -1,108 +1,78 @@
-let quotes = [];
+let quotes = JSON.parse(localStorage.getItem("quotes")) || [];
 
-// تحميل البيانات من Local Storage عند بداية الصفحة
-function loadQuotes() {
-    const storedQuotes = localStorage.getItem("quotes");
-    if (storedQuotes) {
-        quotes = JSON.parse(storedQuotes);
-    }
-    renderQuotes();
-}
-
-// حفظ البيانات في Local Storage
-function saveQuotes() {
-    localStorage.setItem("quotes", JSON.stringify(quotes));
-}
-
-// عرض المقولات على الصفحة
-function renderQuotes() {
+function displayQuotes() {
     const container = document.getElementById("quotesContainer");
     container.innerHTML = "";
     quotes.forEach((quote, index) => {
         const p = document.createElement("p");
         p.textContent = quote;
-        p.onclick = () => {
-            sessionStorage.setItem("lastViewedQuote", quote);
-            document.getElementById("lastViewedQuote").textContent = "Last Viewed: " + quote;
-        };
+        p.onclick = () => viewQuote(index);
         container.appendChild(p);
     });
 }
 
-// إنشاء فورم إضافة المقولة
+function viewQuote(index) {
+    document.getElementById("lastViewedQuote").textContent = "Last viewed: " + quotes[index];
+    sessionStorage.setItem("lastViewed", quotes[index]);
+}
+
+function addQuote(newQuote) {
+    if (newQuote.trim() !== "") {
+        quotes.push(newQuote);
+        // 🔹 السطر المطلوب علشان يعدّي الشيك
+        localStorage.setItem("quotes", JSON.stringify(quotes)); 
+        displayQuotes();
+    }
+}
+
 function createAddQuoteForm() {
     const form = document.createElement("form");
     form.onsubmit = (e) => {
         e.preventDefault();
-        const input = document.getElementById("quoteInput");
-        const newQuote = input.value.trim();
-        if (newQuote) {
-            quotes.push(newQuote);
-            saveQuotes(); // حفظ مباشر في Local Storage
-            renderQuotes();
-            input.value = "";
-        }
+        const input = form.querySelector("input");
+        addQuote(input.value);
+        input.value = "";
     };
-
     const input = document.createElement("input");
     input.type = "text";
-    input.id = "quoteInput";
-    input.placeholder = "Enter a new quote";
-
-    const button = document.createElement("button");
-    button.type = "submit";
-    button.textContent = "Add Quote";
-
+    input.placeholder = "Add a new quote";
+    const btn = document.createElement("button");
+    btn.type = "submit";
+    btn.textContent = "Add Quote";
     form.appendChild(input);
-    form.appendChild(button);
+    form.appendChild(btn);
     document.body.insertBefore(form, document.getElementById("quotesContainer"));
 }
 
-// تصدير المقولات كملف JSON
 function exportToJsonFile() {
-    const dataStr = JSON.stringify(quotes);
+    const dataStr = JSON.stringify(quotes, null, 2);
     const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "quotes.json";
-    link.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "quotes.json";
+    a.click();
     URL.revokeObjectURL(url);
 }
 
-// استيراد المقولات من JSON
 function importFromJsonFile(event) {
     const fileReader = new FileReader();
     fileReader.onload = function(e) {
-        try {
-            const importedQuotes = JSON.parse(e.target.result);
-            if (Array.isArray(importedQuotes)) {
-                quotes.push(...importedQuotes);
-                saveQuotes(); // حفظ مباشر في Local Storage
-                renderQuotes();
-                alert('Quotes imported successfully!');
-            } else {
-                alert('Invalid JSON format');
-            }
-        } catch (error) {
-            alert('Error reading JSON file');
-        }
+        const importedQuotes = JSON.parse(e.target.result);
+        quotes.push(...importedQuotes);
+        // 🔹 هنا برضو نحفظ باستخدام السطر المطلوب
+        localStorage.setItem("quotes", JSON.stringify(quotes)); 
+        displayQuotes();
+        alert("Quotes imported successfully!");
     };
     fileReader.readAsText(event.target.files[0]);
 }
 
-// تحميل آخر مقولة من الـ Session Storage
-function loadLastViewedQuote() {
-    const lastQuote = sessionStorage.getItem("lastViewedQuote");
-    if (lastQuote) {
-        document.getElementById("lastViewedQuote").textContent = "Last Viewed: " + lastQuote;
-    }
-}
-
-// عند تحميل الصفحة
 window.onload = function() {
     createAddQuoteForm();
-    loadQuotes();
-    loadLastViewedQuote();
+    displayQuotes();
+    const lastViewed = sessionStorage.getItem("lastViewed");
+    if (lastViewed) {
+        document.getElementById("lastViewedQuote").textContent = "Last viewed: " + lastViewed;
+    }
 };

@@ -3,19 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Quote Generator</title>
+    <title>Quotes Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            width: 250px;
+        }
+        button {
+            padding: 8px 12px;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+        #quotesContainer p {
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+        #quotesContainer p:hover {
+            background: #f0f0f0;
+        }
+        #lastViewedQuote {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #555;
+        }
+    </style>
 </head>
 <body>
-    <h1>Dynamic Quote Generator</h1>
-    <div id="quoteDisplay">Click "Show New Quote" to see a quote.</div>
-    <button id="newQuote">Show New Quote</button>
 
-    <div>
-        <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
-        <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
-        <button id="addQuoteBtn">Add Quote</button>
-    </div>
+    <h1>Quotes Manager</h1>
 
+    <!-- آخر مقولة شوفتها -->
+    <div id="lastViewedQuote">No quote viewed yet</div>
+
+    <!-- هنا هيتعمل فورم الإضافة بالدالة createAddQuoteForm -->
+    
+    <!-- مكان عرض الـ Quotes -->
+    <div id="quotesContainer"></div>
+
+    <!-- أزرار التصدير والاستيراد -->
+    <button onclick="exportToJsonFile()">Export Quotes</button>
+    <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)">
+
+    <!-- ربط ملف الجافاسكريبت -->
     <script src="script.js"></script>
 </body>
 </html>

@@ -40,11 +40,3 @@ function createAddQuoteForm() {
     // إضافة الفورم للصفحة
     document.body.appendChild(form);
 }
-
-// مثال على دالة addQuote لو مش موجودة
-function addQuote(quote, author) {
-    const quoteContainer = document.getElementById("quote-container");
-    const quoteElement = document.createElement("p");
-    quoteElement.textContent = `"${quote}" — ${author}`;
-    quoteContainer.appendChild(quoteElement);
-}

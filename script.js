@@ -1,39 +1,15 @@
-let quotes = [
-    { text: "The best way to get started is to quit talking and begin doing.", category: "Motivation" },
-    { text: "Your time is limited, so don’t waste it living someone else’s life.", category: "Life" },
-    { text: "If life were predictable it would cease to be life, and be without flavor.", category: "Life" }
-];
+function createAddQuote() {
+    const quotes = [
+        "The best way to predict the future is to invent it.",
+        "Life is 10% what happens to us and 90% how we react to it.",
+        "Do something today that your future self will thank you for.",
+        "Your limitation—it’s only your imagination.",
+        "Push yourself, because no one else is going to do it for you."
+    ];
 
-const quoteDisplay = document.getElementById("quoteDisplay");
-const newQuoteBtn = document.getElementById("newQuote");
-const addQuoteBtn = document.getElementById("addQuoteBtn");
-const newQuoteText = document.getElementById("newQuoteText");
-const newQuoteCategory = document.getElementById("newQuoteCategory");
-
-function showRandomQuote() {
-    if (quotes.length === 0) {
-        quoteDisplay.textContent = "No quotes available. Please add one.";
-        return;
-    }
     const randomIndex = Math.floor(Math.random() * quotes.length);
-    const quote = quotes[randomIndex];
-    quoteDisplay.innerHTML = `<strong>${quote.category}:</strong> "${quote.text}"`;
+    const quoteDisplay = document.getElementById("quoteDisplay");
+    quoteDisplay.textContent = quotes[randomIndex];
 }
 
-function addQuote() {
-    const text = newQuoteText.value.trim();
-    const category = newQuoteCategory.value.trim();
-
-    if (text === "" || category === "") {
-        alert("Please enter both quote and category.");
-        return;
-    }
-
-    quotes.push({ text, category });
-    newQuoteText.value = "";
-    newQuoteCategory.value = "";
-    alert("Quote added successfully!");
-}
-
-newQuoteBtn.addEventListener("click", showRandomQuote);
-addQuoteBtn.addEventListener("click", addQuote);
+document.getElementById("generateBtn").addEventListener("click", createAddQuote);

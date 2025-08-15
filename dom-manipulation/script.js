@@ -1,17 +1,82 @@
+// Quotes array
 let quotes = [
     { text: "The best way to get started is to quit talking and begin doing.", category: "Motivation" },
     { text: "Don't let yesterday take up too much of today.", category: "Inspiration" },
-    { text: "You learn more from failure than from success.", category: "Learning" }
+    { text: "You learn more from failure than from success.", category: "Life" }
 ];
 
-// ---------------- Task 1: Web Storage & JSON Handling -----------------
+// DOM elements
+const quoteDisplay = document.getElementById('quoteDisplay');
 
-// حفظ الاقتباسات في Local Storage
+// Show random quote
+function displayRandomQuote(list = quotes) {
+    if (list.length === 0) {
+        quoteDisplay.innerHTML = "No quotes available for this category.";
+        return;
+    }
+    const randomIndex = Math.floor(Math.random() * list.length);
+    quoteDisplay.innerHTML = `"${list[randomIndex].text}" - ${list[randomIndex].category}`;
+
+    // Save last viewed quote in sessionStorage
+    sessionStorage.setItem('lastQuote', JSON.stringify(list[randomIndex]));
+}
+
+// Add new quote
+function addQuote() {
+    const text = document.getElementById('newQuoteText').value;
+    const category = document.getElementById('newQuoteCategory').value;
+
+    if (!text || !category) return alert("Both fields are required.");
+
+    const newQuote = { text, category };
+    quotes.push(newQuote);
+
+    saveQuotes(); // Save to localStorage
+    populateCategories(); // Update category filter
+    document.getElementById('newQuoteText').value = '';
+    document.getElementById('newQuoteCategory').value = '';
+}
+
+// Populate category dropdown
+function populateCategories() {
+    const filter = document.getElementById('categoryFilter');
+    const categories = [...new Set(quotes.map(q => q.category))];
+
+    // Remove all except 'All Categories'
+    filter.innerHTML = '<option value="all">All Categories</option>';
+
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        filter.appendChild(option);
+    });
+
+    // Restore last selected category
+    const lastCategory = localStorage.getItem('lastCategory') || 'all';
+    filter.value = lastCategory;
+    filterQuotes();
+}
+
+// Filter quotes based on category
+function filterQuotes() {
+    const selectedCategory = document.getElementById('categoryFilter').value;
+    localStorage.setItem('lastCategory', selectedCategory);
+
+    let filteredQuotes = quotes;
+    if (selectedCategory !== 'all') {
+        filteredQuotes = quotes.filter(q => q.category === selectedCategory);
+    }
+
+    displayRandomQuote(filteredQuotes);
+}
+
+// Save quotes to localStorage
 function saveQuotes() {
     localStorage.setItem('quotes', JSON.stringify(quotes));
 }
 
-// تحميل الاقتباسات من Local Storage عند بداية التشغيل
+// Load quotes from localStorage
 function loadQuotes() {
     const storedQuotes = localStorage.getItem('quotes');
     if (storedQuotes) {
@@ -19,27 +84,10 @@ function loadQuotes() {
     }
 }
 
-// استدعاء التحميل مباشرة عند فتح الصفحة
-loadQuotes();
-
-// دالة استيراد الاقتباسات من ملف JSON
-function importFromJsonFile(event) {
-    const fileReader = new FileReader();
-    fileReader.onload = function(event) {
-        const importedQuotes = JSON.parse(event.target.result);
-        quotes.push(...importedQuotes);
-        saveQuotes(); // حفظ بعد الاستيراد
-        alert('Quotes imported successfully!');
-    };
-    fileReader.readAsText(event.target.files[0]);
-}
-
-// دالة تصدير الاقتباسات إلى ملف JSON
-function exportToJsonFile() {
-    const jsonString = JSON.stringify(quotes, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
+// Export quotes as JSON file
+function exportQuotes() {
+    const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement('a');
     a.href = url;
     a.download = 'quotes.json';
@@ -47,37 +95,32 @@ function exportToJsonFile() {
     URL.revokeObjectURL(url);
 }
 
-// ---------------- Task 0: DOM Manipulation -----------------
-
-// عرض اقتباس عشوائي
-function displayRandomQuote() {
-    if (quotes.length === 0) return;
-    const randomIndex = Math.floor(Math.random() * quotes.length);
-    const quote = quotes[randomIndex];
-    document.getElementById('quoteDisplay').innerHTML = `"${quote.text}" - ${quote.category}`;
+// Import quotes from JSON file
+function importFromJsonFile(event) {
+    const fileReader = new FileReader();
+    fileReader.onload = function(event) {
+        const importedQuotes = JSON.parse(event.target.result);
+        quotes.push(...importedQuotes);
+        saveQuotes();
+        populateCategories();
+        alert('Quotes imported successfully!');
+    };
+    fileReader.readAsText(event.target.files[0]);
 }
 
-// إضافة اقتباس جديد
-function addQuote() {
-    const textInput = document.getElementById('newQuoteText');
-    const categoryInput = document.getElementById('newQuoteCategory');
+// Event listener for Show New Quote button
+document.getElementById('newQuote').addEventListener('click', () => displayRandomQuote());
 
-    const text = textInput.value.trim();
-    const category = categoryInput.value.trim();
+// Initialize page
+window.onload = function() {
+    loadQuotes();
+    populateCategories();
 
-    if (text && category) {
-        quotes.push({ text, category });
-        saveQuotes(); // حفظ بعد إضافة الاقتباس
-        displayRandomQuote(); // تحديث العرض مباشرة
-        textInput.value = '';
-        categoryInput.value = '';
+    // Show last viewed quote if available
+    const lastQuote = sessionStorage.getItem('lastQuote');
+    if (lastQuote) {
+        quoteDisplay.innerHTML = `"${JSON.parse(lastQuote).text}" - ${JSON.parse(lastQuote).category}`;
     } else {
-        alert('Please enter both quote and category.');
+        displayRandomQuote();
     }
-}
-
-// زر عرض اقتباس جديد
-document.getElementById('newQuote').addEventListener('click', displayRandomQuote);
-
-// عرض أول اقتباس عند فتح الصفحة
-displayRandomQuote();
+};

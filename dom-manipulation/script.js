@@ -1,3 +1,4 @@
+// Quotes array
 let quotes = JSON.parse(localStorage.getItem('quotes')) || [
   { text: "Life is what happens when you're busy making other plans.", category: "Life" },
   { text: "Be yourself; everyone else is already taken.", category: "Motivation" }
@@ -36,8 +37,9 @@ function addQuote() {
     const newQuote = { text, category };
     quotes.push(newQuote);
     saveQuotes();
-    populateCategories(); // تحديث الفلتر لو فيه كاتيجوري جديدة
+    populateCategories();
     showRandomQuote();
+    syncQuotes(); // ✅ Sync مباشرة بعد الإضافة
     textInput.value = '';
     categoryInput.value = '';
   } else {
@@ -56,7 +58,6 @@ function populateCategories() {
     categoryFilter.appendChild(option);
   });
 
-  // استرجاع آخر فلتر محفوظ
   const savedFilter = localStorage.getItem('selectedCategory');
   if (savedFilter) {
     categoryFilter.value = savedFilter;
@@ -66,7 +67,7 @@ function populateCategories() {
 // Get filtered quotes
 function getFilteredQuotes() {
   const selected = categoryFilter.value;
-  localStorage.setItem('selectedCategory', selected); // حفظ الفلتر
+  localStorage.setItem('selectedCategory', selected);
   if (selected === "all") return quotes;
   return quotes.filter(q => q.category === selected);
 }
@@ -98,13 +99,71 @@ function importFromJsonFile(event) {
       const importedQuotes = JSON.parse(e.target.result);
       quotes.push(...importedQuotes);
       saveQuotes();
-      populateCategories(); // تحديث الفئات بعد الاستيراد
+      populateCategories();
       alert('Quotes imported successfully!');
+      syncQuotes(); // ✅ Sync بعد الاستيراد
     } catch (err) {
       alert('Invalid JSON file');
     }
   };
   fileReader.readAsText(event.target.files[0]);
+}
+
+// ✅ Fetch quotes from server
+async function fetchQuotesFromServer() {
+  try {
+    const res = await fetch("https://jsonplaceholder.typicode.com/posts");
+    const serverData = await res.json();
+
+    // نحول الـ posts ل Quotes
+    const serverQuotes = serverData.slice(0, 5).map(post => ({
+      text: post.title,
+      category: "Server"
+    }));
+
+    // Merge with local (تجنب التكرار)
+    serverQuotes.forEach(sq => {
+      if (!quotes.some(lq => lq.text === sq.text)) {
+        quotes.push(sq);
+      }
+    });
+
+    saveQuotes();
+    populateCategories();
+    showNotification("Quotes synced with server!");
+  } catch (error) {
+    console.error("Error fetching from server:", error);
+  }
+}
+
+// ✅ Sync local quotes with server
+async function syncQuotes() {
+  try {
+    await fetch("https://jsonplaceholder.typicode.com/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(quotes)
+    });
+
+    showNotification("Quotes synced with server!");
+  } catch (error) {
+    console.error("Error syncing:", error);
+  }
+}
+
+// ✅ Notification helper
+function showNotification(message) {
+  const note = document.createElement("div");
+  note.textContent = message;
+  note.style.background = "#28a745";
+  note.style.color = "white";
+  note.style.padding = "10px";
+  note.style.marginTop = "10px";
+  note.style.borderRadius = "5px";
+  document.body.appendChild(note);
+  setTimeout(() => note.remove(), 3000);
 }
 
 // Event listeners
@@ -120,43 +179,5 @@ if (sessionStorage.getItem('lastViewedQuote')) {
   showRandomQuote();
 }
 
-
-// ================= Task 0 requirement (presence only) =================
-function createAddQuoteForm() {
-  // required by checker; form is already in HTML so this is a no-op
-}
-
-
-// ================= Task 3 additions =================
-
-// Fetch quotes from server (simulation) — checker looks for this name exactly
-async function fetchQuotesFromServer() {
-  try {
-    const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5');
-    const data = await response.json();
-
-    // حوّل بيانات السيرفر لصيغة الاقتباسات
-    const serverQuotes = data.map(item => ({
-      text: item.title,
-      category: 'Server'
-    }));
-
-    // Conflict resolution: server data takes precedence (prepend server quotes)
-    quotes = [...serverQuotes, ...quotes];
-    saveQuotes();
-    populateCategories();
-
-    // UI notification required by checker
-    alert("Quotes synced with server!");
-    // وكمان نعرضها في المنطقة الرئيسية لو حاببوا يشيكوا الـ DOM
-    quoteDisplay.innerHTML = "Quotes synced with server!";
-
-    // تحديث العرض
-    showRandomQuote();
-  } catch (error) {
-    console.error("Error syncing with server:", error);
-  }
-}
-
-// مزامنة دورية بسيطة (اختياري، لا يؤثر على الشيكات عادة)
+// ✅ تحديث دوري من السيرفر كل 30 ثانية
 setInterval(fetchQuotesFromServer, 30000);

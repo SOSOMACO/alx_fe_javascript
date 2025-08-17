@@ -7,6 +7,7 @@ let quotes = JSON.parse(localStorage.getItem('quotes')) || [
 // Display elements
 const quoteDisplay = document.getElementById('quoteDisplay');
 const newQuoteBtn = document.getElementById('newQuote');
+const categoryFilter = document.getElementById('categoryFilter');
 
 // Save quotes to localStorage
 function saveQuotes() {
@@ -15,8 +16,13 @@ function saveQuotes() {
 
 // Show random quote
 function showRandomQuote() {
-  const randomIndex = Math.floor(Math.random() * quotes.length);
-  const quote = quotes[randomIndex];
+  let filteredQuotes = getFilteredQuotes();
+  if (filteredQuotes.length === 0) {
+    quoteDisplay.innerHTML = "No quotes available for this category.";
+    return;
+  }
+  const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+  const quote = filteredQuotes[randomIndex];
   quoteDisplay.innerHTML = `"${quote.text}" — ${quote.category}`;
   sessionStorage.setItem('lastViewedQuote', JSON.stringify(quote));
 }
@@ -31,6 +37,7 @@ function addQuote() {
     const newQuote = { text, category };
     quotes.push(newQuote);
     saveQuotes();
+    populateCategories(); // ✅ تحديث الفلتر بالكاتيجوري الجديدة
     showRandomQuote();
     textInput.value = '';
     categoryInput.value = '';
@@ -39,40 +46,35 @@ function addQuote() {
   }
 }
 
-function createAddQuoteForm() {
-  const formContainer = document.createElement('div');
+// Populate category filter
+function populateCategories() {
+  const categories = [...new Set(quotes.map(q => q.category))];
+  categoryFilter.innerHTML = `<option value="all">All Categories</option>`;
+  categories.forEach(cat => {
+    const option = document.createElement('option');
+    option.value = cat;
+    option.textContent = cat;
+    categoryFilter.appendChild(option);
+  });
 
-  const textInput = document.createElement('input');
-  textInput.id = 'newQuoteText';
-  textInput.type = 'text';
-  textInput.placeholder = 'Enter a new quote';
+  // ✅ استرجاع الفلتر المختار من localStorage
+  const savedFilter = localStorage.getItem('selectedCategory');
+  if (savedFilter) {
+    categoryFilter.value = savedFilter;
+  }
+}
 
-  const categoryInput = document.createElement('input');
-  categoryInput.id = 'newQuoteCategory';
-  categoryInput.type = 'text';
-  categoryInput.placeholder = 'Enter quote category';
+// Get filtered quotes
+function getFilteredQuotes() {
+  const selected = categoryFilter.value;
+  localStorage.setItem('selectedCategory', selected); // ✅ حفظ الفلتر
+  if (selected === "all") return quotes;
+  return quotes.filter(q => q.category === selected);
+}
 
-  const addButton = document.createElement('button');
-  addButton.textContent = 'Add Quote';
-  addButton.onclick = addQuote;
-
-  const exportButton = document.createElement('button');
-  exportButton.textContent = 'Export Quotes (JSON)';
-  exportButton.onclick = exportToJsonFile;
-
-  const importInput = document.createElement('input');
-  importInput.type = 'file';
-  importInput.id = 'importFile';
-  importInput.accept = '.json';
-  importInput.onchange = importFromJsonFile;
-
-  formContainer.appendChild(textInput);
-  formContainer.appendChild(categoryInput);
-  formContainer.appendChild(addButton);
-  formContainer.appendChild(exportButton);
-  formContainer.appendChild(importInput);
-
-  document.body.appendChild(formContainer);
+// Filter quotes dynamically
+function filterQuotes() {
+  showRandomQuote();
 }
 
 // Export quotes as JSON
@@ -97,6 +99,7 @@ function importFromJsonFile(event) {
       const importedQuotes = JSON.parse(e.target.result);
       quotes.push(...importedQuotes);
       saveQuotes();
+      populateCategories(); // ✅ تحديث بعد الاستيراد
       alert('Quotes imported successfully!');
     } catch (err) {
       alert('Invalid JSON file');
@@ -107,9 +110,10 @@ function importFromJsonFile(event) {
 
 // Event listeners
 newQuoteBtn.addEventListener('click', showRandomQuote);
+document.getElementById('exportQuotes').addEventListener('click', exportToJsonFile);
 
 // Initial display
-createAddQuoteForm();
+populateCategories();
 if (sessionStorage.getItem('lastViewedQuote')) {
   const lastQuote = JSON.parse(sessionStorage.getItem('lastViewedQuote'));
   quoteDisplay.innerHTML = `"${lastQuote.text}" — ${lastQuote.category}`;

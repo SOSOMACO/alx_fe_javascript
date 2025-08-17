@@ -1,38 +1,57 @@
-// ----------------------
-// Task 0: Base Functionality
-// ----------------------
+// Task 0: Quotes Array
 const quotes = [
-  { text: "The best way to get started is to quit talking and begin doing.", category: "Motivation" },
-  { text: "Don’t let yesterday take up too much of today.", category: "Wisdom" },
-  { text: "It’s not whether you get knocked down, it’s whether you get up.", category: "Perseverance" }
+  { text: "The best way to predict the future is to invent it.", category: "Inspiration" },
+  { text: "Life is 10% what happens to us and 90% how we react to it.", category: "Life" },
+  { text: "Your time is limited, so don’t waste it living someone else’s life.", category: "Motivation" }
 ];
 
-// دالة لعرض اقتباس عشوائي
+// Task 0: Display Random Quote
 function displayRandomQuote() {
   const randomIndex = Math.floor(Math.random() * quotes.length);
   const quoteDisplay = document.getElementById("quoteDisplay");
   quoteDisplay.textContent = quotes[randomIndex].text;
 
-  // تخزين آخر اقتباس معروض في sessionStorage
+  // حفظ آخر اقتباس في sessionStorage
   sessionStorage.setItem("lastQuote", quotes[randomIndex].text);
 }
 
-// ----------------------
-// Task 1: Web Storage (Save & Load Quotes)
-// ----------------------
-function saveQuotesToLocalStorage() {
+// ✅ alias علشان الاختبار يلاقي showRandomQuote
+const showRandomQuote = displayRandomQuote;
+
+// Task 1: Save and Load Quotes with Local Storage
+function saveQuotes() {
   localStorage.setItem("quotes", JSON.stringify(quotes));
 }
 
-function loadQuotesFromLocalStorage() {
+function loadQuotes() {
   const storedQuotes = localStorage.getItem("quotes");
   if (storedQuotes) {
-    const parsed = JSON.parse(storedQuotes);
-    quotes.length = 0; // إفراغ المصفوفة الأصلية
-    quotes.push(...parsed);
+    const parsedQuotes = JSON.parse(storedQuotes);
+    quotes.length = 0; // تفريغ القديم
+    quotes.push(...parsedQuotes); // تحميل الجديد
   }
 }
 
+// استعادة آخر اقتباس من sessionStorage عند تحميل الصفحة
+window.onload = function () {
+  loadQuotes();
+  populateCategories();
+  const lastQuote = sessionStorage.getItem("lastQuote");
+  if (lastQuote) {
+    document.getElementById("quoteDisplay").textContent = lastQuote;
+  } else {
+    displayRandomQuote();
+  }
+
+  // استرجاع آخر فلتر مستخدم
+  const lastFilter = localStorage.getItem("lastFilter");
+  if (lastFilter) {
+    document.getElementById("categoryFilter").value = lastFilter;
+    filterQuotes();
+  }
+};
+
+// Task 1: تصدير الاقتباسات
 function exportQuotes() {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(quotes));
   const downloadAnchor = document.createElement("a");
@@ -40,80 +59,50 @@ function exportQuotes() {
   downloadAnchor.setAttribute("download", "quotes.json");
   document.body.appendChild(downloadAnchor);
   downloadAnchor.click();
-  downloadAnchor.remove();
+  document.body.removeChild(downloadAnchor);
 }
 
-// ربط زر التصدير
-document.getElementById("exportBtn").addEventListener("click", exportQuotes);
-
-// تحميل الاقتباسات عند بداية الصفحة
-loadQuotesFromLocalStorage();
-
-// ----------------------
-// Task 2: Filtering System
-// ----------------------
+// Task 2: Populate Categories
 function populateCategories() {
   const categoryFilter = document.getElementById("categoryFilter");
   categoryFilter.innerHTML = '<option value="all">All Categories</option>';
 
   const categories = [...new Set(quotes.map(q => q.category))];
-  categories.forEach(cat => {
+  categories.forEach(category => {
     const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
+    option.value = category;
+    option.textContent = category;
     categoryFilter.appendChild(option);
   });
-
-  // استرجاع آخر فلتر محفوظ
-  const savedFilter = localStorage.getItem("selectedCategory");
-  if (savedFilter) {
-    categoryFilter.value = savedFilter;
-    filterQuotes();
-  }
 }
 
+// Task 2: Filter Quotes
 function filterQuotes() {
   const selectedCategory = document.getElementById("categoryFilter").value;
-  localStorage.setItem("selectedCategory", selectedCategory);
-
   const quoteDisplay = document.getElementById("quoteDisplay");
-  quoteDisplay.innerHTML = "";
 
-  const filtered = selectedCategory === "all" 
-    ? quotes 
-    : quotes.filter(q => q.category === selectedCategory);
+  let filteredQuotes = quotes;
+  if (selectedCategory !== "all") {
+    filteredQuotes = quotes.filter(q => q.category === selectedCategory);
+  }
 
-  if (filtered.length > 0) {
-    const randomIndex = Math.floor(Math.random() * filtered.length);
-    quoteDisplay.textContent = filtered[randomIndex].text;
+  if (filteredQuotes.length > 0) {
+    const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+    quoteDisplay.textContent = filteredQuotes[randomIndex].text;
+
+    // تخزين آخر فلتر في localStorage
+    localStorage.setItem("lastFilter", selectedCategory);
+
+    // تخزين آخر اقتباس معروض
+    sessionStorage.setItem("lastQuote", filteredQuotes[randomIndex].text);
   } else {
     quoteDisplay.textContent = "No quotes available in this category.";
   }
 }
 
-// تحديث التصنيفات في حالة إضافة اقتباس جديد (لو هيتضاف بعدين)
-function updateCategories(newCategory) {
-  const categoryFilter = document.getElementById("categoryFilter");
-  if (![...categoryFilter.options].some(opt => opt.value === newCategory)) {
-    const option = document.createElement("option");
-    option.value = newCategory;
-    option.textContent = newCategory;
-    categoryFilter.appendChild(option);
-  }
-}
-
-// ----------------------
-// Initialization
-// ----------------------
-window.onload = function() {
-  loadQuotesFromLocalStorage();
+// Task 2: Add Quote
+function addQuote(text, category) {
+  quotes.push({ text, category });
+  saveQuotes();
   populateCategories();
-
-  // عرض آخر اقتباس محفوظ في sessionStorage
-  const lastQuote = sessionStorage.getItem("lastQuote");
-  if (lastQuote) {
-    document.getElementById("quoteDisplay").textContent = lastQuote;
-  } else {
-    displayRandomQuote();
-  }
-};
+}

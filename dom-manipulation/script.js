@@ -1,99 +1,119 @@
-let quotes = [
-    { text: "The journey of a thousand miles begins with one step.", category: "Motivation" },
-    { text: "Life is what happens when you're busy making other plans.", category: "Life" },
+// ----------------------
+// Task 0: Base Functionality
+// ----------------------
+const quotes = [
+  { text: "The best way to get started is to quit talking and begin doing.", category: "Motivation" },
+  { text: "Don’t let yesterday take up too much of today.", category: "Wisdom" },
+  { text: "It’s not whether you get knocked down, it’s whether you get up.", category: "Perseverance" }
 ];
 
-// Load quotes from localStorage
-if (localStorage.getItem('quotes')) {
-    quotes = JSON.parse(localStorage.getItem('quotes'));
+// دالة لعرض اقتباس عشوائي
+function displayRandomQuote() {
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  const quoteDisplay = document.getElementById("quoteDisplay");
+  quoteDisplay.textContent = quotes[randomIndex].text;
+
+  // تخزين آخر اقتباس معروض في sessionStorage
+  sessionStorage.setItem("lastQuote", quotes[randomIndex].text);
 }
 
-// Show random quote
-function showRandomQuote(list = quotes) {
-    if (list.length === 0) return;
-    const randomIndex = Math.floor(Math.random() * list.length);
-    const quote = list[randomIndex];
-    document.getElementById('quoteDisplay').innerHTML = `"${quote.text}" — ${quote.category}`;
-    sessionStorage.setItem('lastQuote', JSON.stringify(quote));
+// ----------------------
+// Task 1: Web Storage (Save & Load Quotes)
+// ----------------------
+function saveQuotesToLocalStorage() {
+  localStorage.setItem("quotes", JSON.stringify(quotes));
 }
 
-// Add new quote
-function addQuote() {
-    const text = document.getElementById('newQuoteText').value.trim();
-    const category = document.getElementById('newQuoteCategory').value.trim();
-    if (!text || !category) return alert("Both fields are required");
-
-    const newQuote = { text, category };
-    quotes.push(newQuote);
-    saveQuotes();
-    populateCategories();
-    showRandomQuote();
+function loadQuotesFromLocalStorage() {
+  const storedQuotes = localStorage.getItem("quotes");
+  if (storedQuotes) {
+    const parsed = JSON.parse(storedQuotes);
+    quotes.length = 0; // إفراغ المصفوفة الأصلية
+    quotes.push(...parsed);
+  }
 }
 
-// Save quotes to localStorage
-function saveQuotes() {
-    localStorage.setItem('quotes', JSON.stringify(quotes));
+function exportQuotes() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(quotes));
+  const downloadAnchor = document.createElement("a");
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", "quotes.json");
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
 }
 
-// Populate categories in filter dropdown
+// ربط زر التصدير
+document.getElementById("exportBtn").addEventListener("click", exportQuotes);
+
+// تحميل الاقتباسات عند بداية الصفحة
+loadQuotesFromLocalStorage();
+
+// ----------------------
+// Task 2: Filtering System
+// ----------------------
 function populateCategories() {
-    const select = document.getElementById('categoryFilter');
-    const categories = Array.from(new Set(quotes.map(q => q.category)));
-    
-    // Clear except "all"
-    select.innerHTML = '<option value="all">All Categories</option>';
-    categories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        option.textContent = cat;
-        select.appendChild(option);
-    });
+  const categoryFilter = document.getElementById("categoryFilter");
+  categoryFilter.innerHTML = '<option value="all">All Categories</option>';
 
-    // Restore last selected category
-    if (localStorage.getItem('lastCategory')) {
-        select.value = localStorage.getItem('lastCategory');
-    }
+  const categories = [...new Set(quotes.map(q => q.category))];
+  categories.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    categoryFilter.appendChild(option);
+  });
+
+  // استرجاع آخر فلتر محفوظ
+  const savedFilter = localStorage.getItem("selectedCategory");
+  if (savedFilter) {
+    categoryFilter.value = savedFilter;
+    filterQuotes();
+  }
 }
 
-// Filter quotes by category
 function filterQuotes() {
-    const selected = document.getElementById('categoryFilter').value;
-    localStorage.setItem('lastCategory', selected);
-    if (selected === 'all') {
-        showRandomQuote();
-    } else {
-        const filtered = quotes.filter(q => q.category === selected);
-        showRandomQuote(filtered);
-    }
+  const selectedCategory = document.getElementById("categoryFilter").value;
+  localStorage.setItem("selectedCategory", selectedCategory);
+
+  const quoteDisplay = document.getElementById("quoteDisplay");
+  quoteDisplay.innerHTML = "";
+
+  const filtered = selectedCategory === "all" 
+    ? quotes 
+    : quotes.filter(q => q.category === selectedCategory);
+
+  if (filtered.length > 0) {
+    const randomIndex = Math.floor(Math.random() * filtered.length);
+    quoteDisplay.textContent = filtered[randomIndex].text;
+  } else {
+    quoteDisplay.textContent = "No quotes available in this category.";
+  }
 }
 
-// Export quotes to JSON
-document.getElementById('exportQuotes').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'quotes.json';
-    a.click();
-    URL.revokeObjectURL(url);
-});
-
-// Import quotes from JSON file
-function importFromJsonFile(event) {
-    const fileReader = new FileReader();
-    fileReader.onload = function(e) {
-        const importedQuotes = JSON.parse(e.target.result);
-        quotes.push(...importedQuotes);
-        saveQuotes();
-        populateCategories();
-        alert('Quotes imported successfully!');
-    };
-    fileReader.readAsText(event.target.files[0]);
+// تحديث التصنيفات في حالة إضافة اقتباس جديد (لو هيتضاف بعدين)
+function updateCategories(newCategory) {
+  const categoryFilter = document.getElementById("categoryFilter");
+  if (![...categoryFilter.options].some(opt => opt.value === newCategory)) {
+    const option = document.createElement("option");
+    option.value = newCategory;
+    option.textContent = newCategory;
+    categoryFilter.appendChild(option);
+  }
 }
 
-// Initial setup
-populateCategories();
-showRandomQuote();
+// ----------------------
+// Initialization
+// ----------------------
+window.onload = function() {
+  loadQuotesFromLocalStorage();
+  populateCategories();
 
-// New Quote button
-document.getElementById('newQuote').addEventListener('click', () => showRandomQuote());
+  // عرض آخر اقتباس محفوظ في sessionStorage
+  const lastQuote = sessionStorage.getItem("lastQuote");
+  if (lastQuote) {
+    document.getElementById("quoteDisplay").textContent = lastQuote;
+  } else {
+    displayRandomQuote();
+  }
+};

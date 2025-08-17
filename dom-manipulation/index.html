@@ -1,26 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic Quote Generator</title>
-</head>
-<body>
-  <h1>Dynamic Quote Generator</h1>
+// Quotes array
+let quotes = [
+  { text: "Life is what happens when you're busy making other plans.", category: "Life" },
+  { text: "Be yourself; everyone else is already taken.", category: "Motivation" }
+];
 
-  <div id="quoteDisplay"></div>
+// Display elements
+const quoteDisplay = document.getElementById('quoteDisplay');
+const newQuoteBtn = document.getElementById('newQuote');
 
-  <!-- زر عرض اقتباس جديد -->
-  <button onclick="displayRandomQuote()">Show Random Quote</button>
+// Show random quote
+function showRandomQuote() {
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  const quote = quotes[randomIndex];
+  quoteDisplay.textContent = `"${quote.text}" — ${quote.category}`;
+}
 
-  <!-- زر تصدير الاقتباسات -->
-  <button id="exportBtn">Export Quotes</button>
+// Add new quote
+function addQuote() {
+  const textInput = document.getElementById('newQuoteText');
+  const categoryInput = document.getElementById('newQuoteCategory');
+  const text = textInput.value.trim();
+  const category = categoryInput.value.trim();
+  if (text && category) {
+    const newQuote = { text, category };
+    quotes.push(newQuote);
+    showRandomQuote();
+    textInput.value = '';
+    categoryInput.value = '';
+  } else {
+    alert('Please enter both quote and category');
+  }
+}
 
-  <!-- فلتر التصنيفات -->
-  <select id="categoryFilter" onchange="filterQuotes()">
-    <option value="all">All Categories</option>
-  </select>
+// Event listeners
+newQuoteBtn.addEventListener('click', showRandomQuote);
 
-  <script src="script.js"></script>
-</body>
-</html>
+// Initial display
+showRandomQuote();

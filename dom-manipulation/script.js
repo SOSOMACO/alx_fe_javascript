@@ -41,7 +41,6 @@ function addQuote() {
     showRandomQuote();
     textInput.value = '';
     categoryInput.value = '';
-    syncQuotesWithServer(); // ✅ بعد الإضافة يرفع للسيرفر
   } else {
     alert('Please enter both quote and category');
   }
@@ -101,13 +100,42 @@ function importFromJsonFile(event) {
       saveQuotes();
       populateCategories();
       alert('Quotes imported successfully!');
-      syncQuotesWithServer(); // ✅ بعد الاستيراد يعمل sync
     } catch (err) {
       alert('Invalid JSON file');
     }
   };
   fileReader.readAsText(event.target.files[0]);
 }
+
+/* -------- Task 3: Sync with Server & Conflict Resolution -------- */
+
+// Fetch quotes from server (simulation)
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+    const data = await response.json();
+
+    // Simulate server quotes
+    const serverQuotes = data.slice(0, 5).map(item => ({
+      text: item.title,
+      category: "Server"
+    }));
+
+    // Conflict resolution: Server data takes precedence
+    quotes = [...serverQuotes, ...quotes];
+    saveQuotes();
+    populateCategories();
+
+    // ✅ UI notification
+    alert("Quotes synced with server!");
+    quoteDisplay.innerHTML = "Quotes synced with server!";
+  } catch (error) {
+    console.error("Error syncing with server:", error);
+  }
+}
+
+// Periodic sync every 30 seconds
+setInterval(fetchQuotesFromServer, 30000);
 
 // Event listeners
 newQuoteBtn.addEventListener('click', showRandomQuote);
@@ -121,80 +149,3 @@ if (sessionStorage.getItem('lastViewedQuote')) {
 } else {
   showRandomQuote();
 }
-
-
-// ================= Task 3 Code =================
-
-// Simulate server interaction (JSONPlaceholder)
-const SERVER_URL = "https://jsonplaceholder.typicode.com/posts";
-
-// Fetch quotes from server
-async function fetchQuotesFromServer() {
-  try {
-    const response = await fetch(SERVER_URL);
-    const data = await response.json();
-
-    // نحاكي إن البيانات جايه كـ quotes
-    const serverQuotes = data.slice(0, 5).map(item => ({
-      text: item.title,
-      category: "Server"
-    }));
-
-    resolveConflicts(serverQuotes);
-  } catch (error) {
-    console.error("Error fetching from server:", error);
-  }
-}
-
-// Sync local quotes to server (simulation)
-async function syncQuotesWithServer() {
-  try {
-    await fetch(SERVER_URL, {
-      method: "POST",
-      body: JSON.stringify(quotes),
-      headers: { "Content-Type": "application/json" }
-    });
-    console.log("Quotes synced with server.");
-  } catch (error) {
-    console.error("Error syncing to server:", error);
-  }
-}
-
-// Conflict resolution: server takes precedence
-function resolveConflicts(serverQuotes) {
-  let conflicts = [];
-
-  serverQuotes.forEach(serverQuote => {
-    const exists = quotes.some(
-      localQuote => localQuote.text === serverQuote.text
-    );
-    if (!exists) {
-      quotes.push(serverQuote);
-      conflicts.push(serverQuote);
-    }
-  });
-
-  if (conflicts.length > 0) {
-    saveQuotes();
-    populateCategories();
-    notifyUser(`${conflicts.length} new quotes synced from server.`);
-  }
-}
-
-// Simple notification system
-function notifyUser(message) {
-  const notification = document.createElement("div");
-  notification.textContent = message;
-  notification.className = "notification";
-  document.body.appendChild(notification);
-
-  setTimeout(() => {
-    notification.remove();
-  }, 4000);
-}
-
-// Periodic sync (every 20s)
-setInterval(fetchQuotesFromServer, 20000);
-
-// First fetch on load
-fetchQuotesFromServer();
